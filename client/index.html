@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Order Management System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header h1 {
+      color: #333;
+      font-size: 28px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f0f0f0;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #10b981;
+    }
+
+    .status-dot.disconnected {
+      background: #ef4444;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .form-section {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .form-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .orders-section {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .orders-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    .order-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+    }
+
+    .order-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .order-card.insert {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    .order-card.update {
+      border-left-color: #3b82f6;
+      background: #f0f9ff;
+    }
+
+    .order-card.delete {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+      opacity: 0.7;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .order-id {
+      font-size: 12px;
+      color: #888;
+      font-family: 'Courier New', monospace;
+    }
+
+    .operation-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .operation-badge.insert {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .operation-badge.update {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    .operation-badge.delete {
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+    .order-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .order-detail {
+      font-size: 14px;
+    }
+
+    .order-detail-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .order-detail-value {
+      color: #333;
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.shipped {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    .status-badge.delivered {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .order-actions button {
+      flex: none;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+    }
+
+    .error-message {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border-left: 4px solid #ef4444;
+    }
+
+    .success-message {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border-left: 4px solid #10b981;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .form-section {
+        position: static;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>📦 Real-Time Order Management</h1>
+    <div class="status-indicator">
+      <div class="status-dot disconnected" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Form Section -->
+    <div class="form-section">
+      <h2>Create New Order</h2>
+      <div id="formMessage"></div>
+      
+      <form id="orderForm">
+        <div class="form-group">
+          <label for="customerName">Customer Name *</label>
+          <input 
+            type="text" 
+            id="customerName" 
+            placeholder="e.g., John Doe"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="productName">Product Name *</label>
+          <input 
+            type="text" 
+            id="productName" 
+            placeholder="e.g., Laptop"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="pending">Pending</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn-primary">Create Order</button>
+          <button type="reset" class="btn-secondary">Clear</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Orders Section -->
+    <div class="orders-section">
+      <h2>Live Orders</h2>
+      <div id="orders">
+        <div class="loading">⏳ Loading orders...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+  // ========== Initialize Socket.io ==========
+  const socket = io("http://localhost:3000");
+  const ordersContainer = document.getElementById("orders");
+  const statusDot = document.getElementById("statusDot");
+  const statusText = document.getElementById("statusText");
+  const orderForm = document.getElementById("orderForm");
+  const formMessage = document.getElementById("formMessage");
+
+  let orders = {};
+
+  // ========== Socket.io Event Handlers ==========
+  socket.on("connect", () => {
+    console.log("✅ Connected to server");
+    updateStatus(true);
+    loadOrders();
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Disconnected from server");
+    updateStatus(false);
+  });
+
+  socket.on("orderUpdated", (data) => {
+    console.log("📢 Order Update Received:", data.operationType, data.document);
+    
+    const orderId = data.document._id;
+    const operationType = data.operationType;
+
+    if (operationType === "delete") {
+      delete orders[orderId];
+    } else {
+      orders[orderId] = data.document;
+    }
+
+    renderOrders();
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("❌ Connection Error:", error);
+    showFormMessage("Connection error. Please refresh the page.", "error");
+  });
+
+  // ========== Form Submission ==========
+  orderForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const customerName = document.getElementById("customerName").value.trim();
+    const productName = document.getElementById("productName").value.trim();
+    const status = document.getElementById("status").value;
+
+    if (!customerName || !productName) {
+      showFormMessage("Customer name and product name are required.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: customerName,
+          product_name: productName,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.errors ? error.errors.join(", ") : error.message);
+      }
+
+      const order = await response.json();
+      orders[order._id] = order;
+      renderOrders();
+
+      showFormMessage("Order created successfully! ✅", "success");
+      orderForm.reset();
+    } catch (error) {
+      console.error("❌ Error creating order:", error);
+      showFormMessage(`Error: ${error.message}`, "error");
+    }
+  });
+
+  // ========== Load All Orders ==========
+  async function loadOrders() {
+    try {
+      const response = await fetch("http://localhost:3000/orders");
+      if (!response.ok) throw new Error("Failed to load orders");
+
+      const fetchedOrders = await response.json();
+      orders = {};
+      fetchedOrders.forEach((order) => {
+        orders[order._id] = order;
+      });
+
+      renderOrders();
+    } catch (error) {
+      console.error("❌ Error loading orders:", error);
+      ordersContainer.innerHTML = `
+        <div class="error-message">
+          Failed to load orders. Please check if the server is running.
+        </div>
+      `;
+    }
+  }
+
+  // ========== Render Orders ==========
+  function renderOrders() {
+    const orderList = Object.values(orders);
+
+    if (orderList.length === 0) {
+      ordersContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <p>No orders yet. Create your first order!</p>
+        </div>
+      `;
+      return;
+    }
+
+    ordersContainer.innerHTML = orderList
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map((order) => `
+        <div class="order-card insert">
+          <div class="order-header">
+            <div>
+              <div class="order-id">ID: ${order._id}</div>
+            </div>
+            <span class="operation-badge insert">New</span>
+          </div>
+
+          <div class="order-details">
+            <div class="order-detail">
+              <div class="order-detail-label">👤 Customer</div>
+              <div class="order-detail-value">${escapeHtml(order.customer_name)}</div>
+            </div>
+            <div class="order-detail">
+              <div class="order-detail-label">📦 Product</div>
+              <div class="order-detail-value">${escapeHtml(order.product_name)}</div>
+            </div>
+          </div>
+
+          <div class="order-detail">
+            <div class="order-detail-label">Status</div>
+            <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
+          </div>
+
+          <div class="order-actions">
+            <button class="btn-success" onclick="updateOrderStatus('${order._id}', 'shipped')">
+              🚚 Ship
+            </button>
+            <button class="btn-success" onclick="updateOrderStatus('${order._id}', 'delivered')">
+              ✅ Deliver
+            </button>
+            <button class="btn-danger" onclick="deleteOrder('${order._id}')">
+              🗑️ Delete
+            </button>
+          </div>
+
+          <div class="timestamp">
+            Created: ${new Date(order.createdAt).toLocaleString()}
+          </div>
+        </div>
+      `)
+      .join("");
+  }
+
+  // ========== Update Order Status ==========
+  async function updateOrderStatus(orderId, newStatus) {
+    try {
+      const response = await fetch(`http://localhost:3000/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update order");
+
+      const updatedOrder = await response.json();
+      orders[orderId] = updatedOrder;
+      renderOrders();
+      showFormMessage(`Order status updated to ${newStatus}! ✅`, "success");
+    } catch (error) {
+      console.error("❌ Error updating order:", error);
+      showFormMessage(`Error: ${error.message}`, "error");
+    }
+  }
+
+  // ========== Delete Order ==========
+  async function deleteOrder(orderId) {
+    if (!confirm("Are you sure you want to delete this order?")) return;
+
+    try {
+      const response = await fetch(`http://localhost:3000/orders/${orderId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete order");
+
+      delete orders[orderId];
+      renderOrders();
+      showFormMessage("Order deleted successfully! ✅", "success");
+    } catch (error) {
+      console.error("❌ Error deleting order:", error);
+      showFormMessage(`Error: ${error.message}`, "error");
+    }
+  }
+
+  // ========== Update Connection Status ==========
+  function updateStatus(isConnected) {
+    statusDot.className = `status-dot ${isConnected ? "connected" : "disconnected"}`;
+    statusText.textContent = isConnected ? "🟢 Connected" : "🔴 Disconnected";
+  }
+
+  // ========== Show Form Message ==========
+  function showFormMessage(message, type) {
+    formMessage.innerHTML = `<div class="${type}-message">${message}</div>`;
+    setTimeout(() => {
+      formMessage.innerHTML = "";
+    }, 5000);
+  }
+
+  // ========== Escape HTML ==========
+  function escapeHtml(text) {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+</script>
+
+</body>
+</html>
